@@ -1,4 +1,4 @@
-import Groq from "groq-sdk";
+import Groq from "groq-sdk/index.mjs";
 import { tavily } from "@tavily/core";
 import dotenv from "dotenv";
 import readline from "node:readline/promises";
