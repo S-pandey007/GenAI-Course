@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import readline from "node:readline/promises";
 dotenv.config();
 
+// gitHub testing
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
