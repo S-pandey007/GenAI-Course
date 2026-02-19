@@ -1,6 +1,7 @@
 import Groq from "groq-sdk/index.mjs";
 import { tavily } from "@tavily/core";
 import dotenv from "dotenv";
+import NodeCache from "node-cache";
 
 dotenv.config();
 
@@ -9,6 +10,8 @@ const groq = new Groq({
 });
 
 const tvly = tavily({ apiKey: process.env.WEB_CALLING });
+
+const cache = new NodeCache({ stdTTL: 60 * 60 * 24 }); //24 hours cache
 
 /**
  * TOOL FUNCTION: webSearch
@@ -49,12 +52,12 @@ async function webSearch({ query }) {
  * 3. send tool result back to LLM
  * 4. repeat until LLM produces final answer
  */
-export async function generateAgent(userMessage) {
+export async function generateAgent(userMessage, threadId) {
   /**
    * conversation history array.
    * this keeps full chat memory b/w user, assistant and tools
    */
-  const messages = [
+  const baseMessages = [
     {
       role: "system",
       content: `You are a smart personal assistant.
@@ -88,6 +91,12 @@ export async function generateAgent(userMessage) {
   ];
 
   /**
+   * Load conversation history from cache if exists.
+   * This allows the agent to have memory of past interactions in the same thread.
+   */
+  const messages = cache.get(threadId) ?? baseMessages;
+
+  /**
    * Infinite loop for agent reasoning cycle
    * Loop continues until LLM gives final response.
    */
@@ -97,7 +106,16 @@ export async function generateAgent(userMessage) {
     content: userMessage,
   });
 
+  const MAX_RETRIES = 10; // to prevent infinite loops in case of issues
+  let count=0;
   while (true) {
+
+    if(count>=MAX_RETRIES){
+        return "Sorry, I'm having trouble finding the answer right now. please try again later."
+    }
+    count++;
+
+
     /**
      * step 1 : send conversation tool
      *
@@ -163,6 +181,11 @@ export async function generateAgent(userMessage) {
      * step 2: If no tool calls-> final answer
      */
     if (!toolCalls) {
+      /**
+       * Cache the conversation history with threadId as key.
+       * This allows us to maintain context in future interactions in the same thread.
+       */
+      cache.set(threadId, messages);
       return response.choices[0].message.content;
       //   console.log("Assistant : ", response.choices[0].message.content);
     }

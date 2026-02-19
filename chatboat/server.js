@@ -12,8 +12,12 @@ app.get('/', (req, res) => {
 
 
 app.post('/chat',async(req,res)=>{
-    const {message}=req.body;
-    const response=await generateAgent(message)
+    const {message,threadId}=req.body;
+
+    if(!message || !threadId){
+        return res.status(400).json({error:"message and threadId are required"})
+    }
+    const response=await generateAgent(message,threadId)
     res.json({message:response})
 
 })
