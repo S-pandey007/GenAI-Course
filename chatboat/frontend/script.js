@@ -5,8 +5,14 @@ const askBtn = document.querySelector("#ask");
 input?.addEventListener("keyup", handleEnter);
 askBtn?.addEventListener("click", handleAsk);
 
+// loading element
+const loading = document.createElement("div");
+loading.className = "my-6 animate-pulse text-neutral-500";
+loading.textContent = "Thinking...";
+
+
 /**
- * 1. append message UI
+ * 1. append message UIs
  * 2. send it to the LLM
  * 3. append response to the UI
  */
@@ -18,14 +24,22 @@ async function generateMessageUIAndSendLLM(text) {
   chatContainer?.appendChild(msg);
   input.value = "";
 
+  // add loading element
+  chatContainer?.appendChild(loading);
+
   //2. send it to the LLM
   const assistanMessage = await callServer(text);
-  console.log(assistanMessage);
+  // console.log(assistanMessage);
 
   //3. append response to the UI
   const assistantMsgEle = document.createElement("div");
   assistantMsgEle.className = `max-w-fit`;
   assistantMsgEle.textContent = assistanMessage;
+
+  // remove loading element
+  loading.remove();
+  
+  // add assistant message element
   chatContainer?.appendChild(assistantMsgEle);
 }
 
